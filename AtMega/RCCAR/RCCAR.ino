@@ -93,14 +93,9 @@ int main(){
         }
         break;
       case '5' :
-        if(UARTREAD[1] == '1' & isSet != true){
-          PORTB |= 0b00010000;
-          isSet = true;
-        }
-        if(UARTREAD[1] == '0' & isSet == true){
-          PORTB &= 0b11101111;
-          isSet = false;
-        }
+        PORTB ^= 0b00010000;
+        UARTREAD[0] = 0;
+        UARTREAD[1] = 0;
         break;
       default :
         OCR0A = 0, OCR0B = 0, OCR2A = 0, OCR2B = 0;
