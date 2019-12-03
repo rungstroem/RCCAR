@@ -1,8 +1,10 @@
-  #include <avr/io.h>
-
 #define F_CPU 16000000UL
 #define BAUDRATE 9600
 #define BAUD_PRESC ((F_CPU/(16UL*BAUDRATE))-1)
+
+#include <avr/io.h>
+
+// Timer output pins 
 /* Timer0 OC0A-PD6 OC0B-PD5   TCCR0A-OCR0A for OC0A, TCCR0B-OCR0B for OC0B*/
 /* Timer1 OC1A-PB1 OC1B-PB2   TCCR1A-OCR1A for OC1A, TCCR1B-OCR1B for OC1B*/
 /* Timer2 OC2A-PB3 OC2B-PD3   TCCR2A-OCR2A for OC2A, TCCR2B-OCR2B for OC2B*/
@@ -38,6 +40,7 @@ int main(){
   DDRD |= (1<<3); //D3 output - OCR2B
   DDRB |= (1<<3); //B3 output - OCR2A
   DDRB |= (1<<5); //output with led for im alive
+  DDRB |= (1<<4); //output for headlights
   
   //Timer setup
   //Timet 0
@@ -55,29 +58,49 @@ int main(){
   
   //Enable global interrupt
   sei();
+
+  //Variable for headlights toggle
+  bool isSet = false;
   
   while(1){
     //UARTREAD[0] enables if = 1 - forward, 2 - backward enable, 3 - left, 4 - right, 5 - headlights 
+    
+    //Everything is transmittet as ASCII - fix!
     switch(UARTREAD[0]){
       case '1':
         OCR0A = 0;
-        OCR0B = UARTREAD[1];
-        UDR0 = UARTREAD[1];
+        if(OCR0B != UARTREAD[1]){
+          OCR0B = UARTREAD[1];  
+        }
+        UDR0 = UARTREAD[1]; //This shows that the internal crystal is not accurate
         break;
       case '2' :
         OCR0B = 0;
-        OCR0A = UARTREAD[1];
+        if(OCR0A != UARTREAD[1]){
+          OCR0A = UARTREAD[1];  
+        }
         break;
       case '3' :
         OCR2A = 0;
-        OCR2B = UARTREAD[1];
+        if(OCR2B != UARTREAD[1]){
+          OCR2B = UARTREAD[1]; 
+        }
         break;
       case '4' :
         OCR2B = 0;
-        OCR2A = UARTREAD[1];
+        if(OCR2A != UARTREAD[1]){
+          OCR2A = UARTREAD[1]; 
+        }
         break;
       case '5' :
-        //headlights toggle
+        if(UARTREAD[1] == '1' & isSet != true){
+          PORTB |= 0b00010000;
+          isSet = true;
+        }
+        if(UARTREAD[1] == '0' & isSet == true){
+          PORTB &= 0b11101111;
+          isSet = false;
+        }
         break;
       default :
         OCR0A = 0, OCR0B = 0, OCR2A = 0, OCR2B = 0;
