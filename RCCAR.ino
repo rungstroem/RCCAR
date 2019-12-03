@@ -82,15 +82,6 @@ int main(){
         OCR0A = 0, OCR0B = 0, OCR2A = 0, OCR2B = 0;
         break;
     }
-    /*OCR0A = 250;
-    //OCR0B = 250;
-    _delay_ms(500);
-    OCR0A = 10;
-    //OCR0B = 10;
-    _delay_ms(500);
-    OCR0A = 128;
-    //OCR0B = 128;
-    _delay_ms(500);*/
   }
   
   return 0;
