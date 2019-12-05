@@ -72,7 +72,6 @@ int main(){
         if(OCR0B != UARTREAD[1]){
           OCR0B = UARTREAD[1];  
         }
-        UDR0 = UARTREAD[1]; //This shows that the internal crystal is not accurate
         break;
       case '2' :
         OCR0B = 0;
@@ -96,6 +95,7 @@ int main(){
         PORTB ^= 0b00010000;
         UARTREAD[0] = 0;
         UARTREAD[1] = 0;
+        UARTREADCOUNT = 0;
         break;
       default :
         OCR0A = 0, OCR0B = 0, OCR2A = 0, OCR2B = 0;
