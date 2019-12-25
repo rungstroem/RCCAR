@@ -1,4 +1,6 @@
 #include <stdio.h>
+#include <unistd.h>
+#include <stdlib.h>
 #include <sys/types.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
@@ -14,17 +16,17 @@ void error(char *msg){	//exec on syscall error, print msg to stderr
 }
 
 void *image_transmit_thread(void *arg){
-	int newSocket = *((int *)arg);
+	int new_socket = *((int *)arg);
 	int bytesWritten = 0;
 
 	char viewConMes[] = "Message from server: Viewer connected";
 	
-	bytesWritten = write(newSocket, &viewConMes, sizeof(viewConMes));
+	bytesWritten = write(new_socket, &viewConMes, sizeof(viewConMes));
 	if(bytesWritten < 0){
 		printf("Error writing to socket");
 	}
 
-	close(newSocket);
+	close(new_socket);
 	pthread_exit(NULL);
 }
 
@@ -47,12 +49,12 @@ int main(int argc, char *argv[]){
     int server_socket;
     int client_socket;
     int server_port_nr;
-    int clientAddressLength;
+    int client_address_length;
 
     char buffer[10];
-    char viewConnect[10] = "screenview";
-	char contConnect[10] = "controller";
-	char CliLimMes[] = "No more clients accepted";
+    char connection_cmp_buf_viewer[] = "screenview";
+	char connection_cmp_buf_controller[] = "controller";
+	char client_limit_message[] = "No more clients accepted";
     
 	struct sockaddr_in server_address;
     struct sockaddr_in client_address;
@@ -89,12 +91,12 @@ int main(int argc, char *argv[]){
 
 	int i = 0;
 	while(1){
-		clientAddressLength = sizeof(client_address);
+		client_address_length = sizeof(client_address);
 
 		//accept function blocks process until a connection is made.
 		//e.i process waits for connections.
 		client_socket = accept(server_socket, (struct sockaddr *)
-		&client_address, &clientAddressLength);
+		&client_address, &client_address_length);
     
 		bzero(buffer, 10); //initialize/zero-out buffer 
     
@@ -102,7 +104,7 @@ int main(int argc, char *argv[]){
 		if( read(client_socket, buffer, 10) < 0 ){
 			error("ERROR reading from socket");
 		} else{
-			if(strcmp(&buffer, &viewConnect) == 0){
+			if(strcmp(buffer, connection_cmp_buf_viewer) == 0){
 				// Check for thread creation
 				if( pthread_create(&thread[i], NULL, image_transmit_thread,
 				&client_socket) != 0 ){
@@ -111,8 +113,7 @@ int main(int argc, char *argv[]){
 					printf("image thread created");
 					i++;
 				}
-			} 
-			if(strcmp(&buffer, &contConnect) == 0){
+			} else if(strcmp(buffer, connection_cmp_buf_controller) == 0){
 				// Check for thread creation
 				if( pthread_create(&thread[i], NULL, controller_input_thread,
 				&client_socket) != 0 ){
@@ -121,14 +122,12 @@ int main(int argc, char *argv[]){
 					printf("controller thread created");
 					i++;
 				}
-			}
-			if(strcmp(buffer, viewConnect) != 0 && strcmp(buffer, contConnect)
-			!= 0){
+			} else{
 				printf("No connections matching image viewer or controller");
 			}
 		}
-		if(i>num_of_cli){
-			write(server_socket, &CliLimMes, sizeof(CliLimMes));
+		if(i >= num_of_cli){
+			write(server_socket, &client_limit_message, sizeof(client_limit_message));
 			i = 0;
 			while(i < num_of_cli){
 				pthread_join(thread[i], NULL);

@@ -62,7 +62,8 @@ int main(){
     tty.c_cc[VMIN] = 0;
 
     tcsetattr(serial_port, TCSANOW, &tty);
-    
+   
+	/*
     int i = 0;
     char writeBuf = 0b00110001;
     char FF = 0b11111110;
@@ -83,6 +84,13 @@ int main(){
     //readBytes = read(serial_port, &readBuf, 1);
     //cout << readBuf[0];
     sleep(1);
+	*/
+
+	char writeBuf = 0b00110101;
+	write(serial_port, &writeBuf, 1);
+	sleep(1);
+	write(serial_port, &writeBuf, 1);
+
     close(serial_port);
 
     return 0;
