@@ -18,14 +18,24 @@ void error(char *msg){	//exec on syscall error, print msg to stderr
 void *image_transmit_thread(void *arg){
 	int new_socket = *((int *)arg);
 	int bytesWritten = 0;
-
+	time_t Ctime = 0, Ptime = 0, interval = 2;
 	char viewConMes[] = "Message from server: Viewer connected";
+	int i = 0;
 	
-	bytesWritten = write(new_socket, &viewConMes, sizeof(viewConMes));
-	if(bytesWritten < 0){
-		printf("Error writing to socket");
+	//Perhaps implement clicular buffer on client side for image fragment packages.
+	while(1){
+		Ctime = time(NULL);
+		if((Ctime - Ptime) > interval){
+			bytesWritten = write(new_socket, &viewConMes, sizeof(viewConMes));
+			if(bytesWritten < 0){
+				printf("Error writing to socket");
+				break;
+			}
+			i++;
+			Ptime = Ctime;
+		}
+		if(i>5) break;
 	}
-
 	close(new_socket);
 	pthread_exit(NULL);
 }
@@ -33,14 +43,39 @@ void *image_transmit_thread(void *arg){
 void *controller_input_thread(void *arg){
 	int new_socket = *((int *)arg);
 	int bytesWritten = 0;
-
+	time_t Ctime = 0, Ptime = 0, interval = 1;
 	char contConMes[] = "Message from server: Controller connected";
+	char mesReceived[2] = "OK";	
+	char message[5];
 	
 	bytesWritten = write(new_socket, &contConMes, sizeof(contConMes));
 	if(bytesWritten < 0){
 		printf("Error writing to socket");
+		goto end;
 	}
-
+	//Needs syncronnization with client
+	//Error in reading, all buffers are mixed..
+	int i = 0;
+	while(1){
+		Ctime = time(NULL);
+		if((Ctime - Ptime) > interval){
+			bzero(message, 5);
+			bytesWritten = read(new_socket, &message, 5);
+			if(bytesWritten < 0){
+				printf("Error reading form socket");
+				break;
+			}
+			if(!(bytesWritten > 0)){
+				if(write(new_socket, &mesReceived, sizeof(mesReceived)) < 0) break;
+			}
+			printf("%s\n", message);
+			i++;
+			Ptime = Ctime;
+		}
+		if(i>5) break;
+	}
+	
+	end:
 	close(new_socket);
 	pthread_exit(NULL);
 }
