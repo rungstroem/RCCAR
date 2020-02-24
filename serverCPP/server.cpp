@@ -1,3 +1,4 @@
+//Library includes
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
@@ -8,9 +9,12 @@
 #include <time.h>
 #include <pthread.h>
 
+// Classes includes
 #include "serialClass.cpp"
 
+// Defines
 #define num_of_cli 5
+
 
 using namespace std;
 
@@ -116,7 +120,7 @@ int main(int argc, char *argv[]){
 
     server_socket = socket(AF_INET, SOCK_STREAM, 0);
     if(server_socket < 0){
-	    error("ERROR opening socket");
+	    //error("ERROR opening socket");
     }
 
     bzero((char *) &server_address, sizeof(server_address));
@@ -129,13 +133,14 @@ int main(int argc, char *argv[]){
 	//Bind to server socket
     if( bind(server_socket, (struct sockaddr *) &server_address,
 	sizeof(server_address)) < 0){
-		error("ERROR on socket binding");
+		//error("ERROR on socket binding");
     }
 
 	//Vi er kommet hertil - listen() skal måske ind i while(1) løkken 
 
     if( listen(server_socket, 5) < 0 ){
-		error("Error on listen function");
+		//error("Error on listen function");
+		printf("Error on listen function");
 	}	//Listen on the socket for connections, 5 the number of waiting connections
    
 	pthread_t thread[num_of_cli];	//Create threads
@@ -153,7 +158,8 @@ int main(int argc, char *argv[]){
     
 		//reads from socket + error check
 		if( read(client_socket, buffer, 10) < 0 ){
-			error("ERROR reading from socket");
+			//error("ERROR reading from socket");
+			printf("ERROR reading from socket");
 		} else{
 			if(strcmp(buffer, connection_cmp_buf_viewer) == 0){
 				// Check for thread creation
