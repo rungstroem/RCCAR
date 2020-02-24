@@ -8,9 +8,11 @@
 #include <time.h>
 #include <pthread.h>
 
-//#include "serialClass.cpp"
+#include "serialClass.cpp"
 
 #define num_of_cli 5
+
+using namespace std;
 
 void error(char *msg){	//exec on syscall error, print msg to stderr
 	perror(msg);
@@ -23,7 +25,7 @@ void *image_transmit_thread(void *arg){
 	time_t Ctime = 0, Ptime = 0, interval = 2;
 	char viewConMes[] = "Message from server: Viewer connected";
 	int i = 0;
-	printf("Image thread created");	
+	printf("viewer thread created");	
 	//Perhaps implement circular buffer on client side for image fragment packages.
 	while(1){
 		Ctime = time(NULL);
@@ -47,11 +49,12 @@ void *controller_input_thread(void *arg){
 	int bytes = 0;
 	time_t Ctime = 0, Ptime = 0, interval = 1;
 	char contConMes[] = "Message from server: Controller connected";
-	char mesReceived[2] = "OK";	
+	char mesReceived[] = "OK";	
 	char message[5];
-	
-	//serial_interface serial;
-	//serial.setup();
+	char mesSocketClosed[] = "Socket closed";
+
+	serial_interface serial;
+	serial.setup();
 
 	bytes = write(new_socket, &contConMes, sizeof(contConMes));
 	if(bytes < 0){
@@ -60,6 +63,7 @@ void *controller_input_thread(void *arg){
 		close(new_socket);
 		pthread_exit(NULL);
 	}
+	printf("Ready to receive");
 	int i = 0;
 	while(1){
 		Ctime = time(NULL);
@@ -76,7 +80,7 @@ void *controller_input_thread(void *arg){
 					printf("Error writing to socket");
 					break;
 				}
-				//serial.serial_write();
+				serial.serial_write();
 			}
 			printf("%s\n", message);
 			i++;
@@ -86,6 +90,7 @@ void *controller_input_thread(void *arg){
 	}
 	
 	//end:
+	printf("%s\n", mesSocketClosed);
 	close(new_socket);
 	pthread_exit(NULL);
 }
@@ -97,8 +102,8 @@ int main(int argc, char *argv[]){
     int client_address_length;
 
     char buffer[10];
-    char connection_cmp_buf_viewer[10] = "screenview";
-	char connection_cmp_buf_controller[10] = "controller";
+    char connection_cmp_buf_viewer[11] = "screenview";
+	char connection_cmp_buf_controller[11] = "controller";
 	char client_limit_message[] = "No more clients accepted";
     
 	struct sockaddr_in server_address;
@@ -142,7 +147,7 @@ int main(int argc, char *argv[]){
 		//accept function blocks process until a connection is made.
 		//e.i process waits for connections.
 		client_socket = accept(server_socket, (struct sockaddr *)
-		&client_address, &client_address_length);
+		&client_address, (socklen_t*)&client_address_length);
     
 		bzero(buffer, 10); //initialize/zero-out buffer 
     
